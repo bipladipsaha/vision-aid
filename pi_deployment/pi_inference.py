@@ -152,6 +152,7 @@ def start_ws_server(port=8765):
 
 def start_tof_thread(tof_manager, tts_manager):
     """Continuously polls ToF sensors at 10Hz and triggers warnings."""
+    last_warning_time = 0
     while True:
         distances = tof_manager.get_distances()
         
@@ -162,7 +163,7 @@ def start_tof_thread(tof_manager, tts_manager):
         # Center & Bottom thresholds
         for pos in ['center', 'bottom']:
             d = distances.get(pos, 9999)
-            if d != -1 and d < 800:
+            if d != -1 and 100 < d < 800:
                 warning_triggered = True
                 warning_sensor = pos
                 warning_dist = d
@@ -172,7 +173,7 @@ def start_tof_thread(tof_manager, tts_manager):
         if not warning_triggered:
             for pos in ['left', 'right']:
                 d = distances.get(pos, 9999)
-                if d != -1 and d < 600:
+                if d != -1 and 100 < d < 600:
                     warning_triggered = True
                     warning_sensor = pos
                     warning_dist = d
@@ -181,32 +182,38 @@ def start_tof_thread(tof_manager, tts_manager):
         with state.lock:
             current_mode = state.mode
             
+        current_time = time.time()
+        
         if warning_triggered:
-            # Calculate proximity (0.0 to 1.0) for the app
-            proximity = max(0.0, min(1.0, 1.0 - (warning_dist / 1500.0)))
-            
-            # 1. Send WebSocket Alert matching Android App schema
-            broadcast_ws_message({
-                "type": "obstacle_warning",
-                "payload": {
-                    "proximity": round(proximity, 2),
-                    "direction": warning_sensor,
-                    "distance_cm": warning_dist // 10
-                }
-            })
-            
-            # 2. Audio Directional Warning
-            if current_mode in ["IDLE", "PAUSED"]:
-                if warning_sensor == "bottom":
-                    tts_manager.announce("Obstacle below")
-                elif warning_sensor == "center":
-                    tts_manager.announce("Obstacle ahead")
-                else:
-                    tts_manager.announce(f"Obstacle {warning_sensor}")
-                    
-                # Force AI to identify
-                state.set_mode("IDENTIFY_OBSTACLE")
+            if current_time - last_warning_time > 3.0:
+                last_warning_time = current_time
+                
+                # Calculate proximity (0.0 to 1.0) for the app
+                proximity = max(0.0, min(1.0, 1.0 - (warning_dist / 1500.0)))
+                
+                # 1. Send WebSocket Alert matching Android App schema
+                broadcast_ws_message({
+                    "type": "obstacle_warning",
+                    "payload": {
+                        "proximity": round(proximity, 2),
+                        "direction": warning_sensor,
+                        "distance_cm": warning_dist // 10
+                    }
+                })
+                
+                # 2. Audio Directional Warning
+                if current_mode in ["IDLE", "PAUSED"]:
+                    if warning_sensor == "bottom":
+                        tts_manager.announce("Obstacle below")
+                    elif warning_sensor == "center":
+                        tts_manager.announce("Obstacle ahead")
+                    else:
+                        tts_manager.announce(f"Obstacle {warning_sensor}")
+                        
+                    # Force AI to identify
+                    state.set_mode("IDENTIFY_OBSTACLE")
         else:
+            # Only revert to base_mode if we are in IDENTIFY_OBSTACLE and the obstacle is gone
             if current_mode == "IDENTIFY_OBSTACLE":
                 with state.lock:
                     prev = state.base_mode
@@ -777,6 +784,8 @@ def main():
                                         "distance": 1.5
                                     }
                                 })
+                                # Revert to PAUSED after finding it
+                                state.set_mode("PAUSED")
                             break
                             
             elif current_mode == "DESCRIBE":
@@ -798,6 +807,8 @@ def main():
                                 "description": f"I see {', '.join(objects_seen)}."
                             }
                         })
+                        # Revert to PAUSED after describing
+                        state.set_mode("PAUSED")
 
             elif current_mode == "IDENTIFY_OBSTACLE":
                 # Announce the object closest to the center of the frame
@@ -821,6 +832,8 @@ def main():
                                     "description": f"Obstacle identified: {best_det['class_name']}"
                                 }
                             })
+                            # Revert to PAUSED after identifying obstacle
+                            state.set_mode("PAUSED")
             
             # ── Output ──
             if args.headless:
