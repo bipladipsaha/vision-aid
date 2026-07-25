@@ -72,12 +72,16 @@ class CommandRouter @Inject constructor(
             // ── Vision / Pi Commands ─────────────────────────────
             is ParsedCommand.DescribeScene -> {
                 speak("Describing your surroundings")
+                connectionManager.send(PiMessage.Outgoing.ResumeVisionAI())
+                kotlinx.coroutines.delay(100)
                 connectionManager.send(PiMessage.Outgoing.DescribeScene())
                 conversationContext.update(action = "describe")
             }
 
             is ParsedCommand.FindObject -> {
                 speak("Looking for ${command.objectName}")
+                connectionManager.send(PiMessage.Outgoing.ResumeVisionAI())
+                kotlinx.coroutines.delay(100)
                 connectionManager.send(PiMessage.Outgoing.FindObject(command.objectName))
                 conversationContext.update(
                     objectName = command.objectName,

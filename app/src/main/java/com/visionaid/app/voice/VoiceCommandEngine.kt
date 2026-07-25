@@ -343,7 +343,8 @@ class VoiceCommandEngine @Inject constructor(
         
         if (text.contains("resume camera") || text.contains("wake camera") || 
             text.contains("start camera") || text.contains("enable camera") ||
-            text.contains("resume vision") || text.contains("wake vision")) {
+            text.contains("resume vision") || text.contains("wake vision") ||
+            text.contains("open camera") || text.contains("turn on camera")) {
             return ParsedCommand.ResumeVision
         }
 

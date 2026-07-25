@@ -34,7 +34,8 @@ import tof
 # ══════════════════════════════════════════════════════════
 class SystemState:
     def __init__(self):
-        self.mode = "IDLE"  # Options: IDLE, FIND_OBJECT, DESCRIBE, IDENTIFY_OBSTACLE
+        self.mode = "PAUSED"  # Default to PAUSED (camera off) to save battery
+        self.base_mode = "PAUSED"
         self.target_object = None
         self.clients = set() # Connected websocket clients
         self.lock = threading.Lock()
@@ -43,6 +44,13 @@ class SystemState:
         
     def set_mode(self, mode, target=None):
         with self.lock:
+            # Track the mode we were in before identifying an obstacle
+            if mode == "IDENTIFY_OBSTACLE" and self.mode != "IDENTIFY_OBSTACLE":
+                self.base_mode = self.mode
+            # Explicit user commands reset the base mode
+            elif mode != "IDENTIFY_OBSTACLE":
+                self.base_mode = mode
+
             self.mode = mode
             self.target_object = target
             print(f"[STATE] Mode changed to {mode}, Target: {target}")
@@ -192,7 +200,7 @@ def start_tof_thread(tof_manager, tts_manager):
             })
             
             # 2. Audio Directional Warning
-            if current_mode == "IDLE":
+            if current_mode in ["IDLE", "PAUSED"]:
                 if warning_sensor == "bottom":
                     tts_manager.announce("Obstacle below")
                 elif warning_sensor == "center":
@@ -204,7 +212,9 @@ def start_tof_thread(tof_manager, tts_manager):
                 state.set_mode("IDENTIFY_OBSTACLE")
         else:
             if current_mode == "IDENTIFY_OBSTACLE":
-                state.set_mode("IDLE")
+                with state.lock:
+                    prev = state.base_mode
+                state.set_mode(prev)
                 
         time.sleep(0.1) # 10Hz
 
