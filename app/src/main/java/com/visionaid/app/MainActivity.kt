@@ -130,6 +130,12 @@ class MainActivity : ComponentActivity() {
                                 onGestureAction = { gesture ->
                                     visionAidService?.handleGesture(gesture)
                                 },
+                                onFindObject = { objectName ->
+                                    visionAidService?.findObject(objectName)
+                                },
+                                onStopCamera = {
+                                    visionAidService?.stopCamera()
+                                },
                                 onNavigateSettings = {
                                     navController.navigate("settings")
                                 },

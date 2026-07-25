@@ -163,7 +163,7 @@ def start_tof_thread(tof_manager, tts_manager):
         # Center & Bottom thresholds
         for pos in ['center', 'bottom']:
             d = distances.get(pos, 9999)
-            if d != -1 and 100 < d < 800:
+            if d != -1 and 100 < d < 200:
                 warning_triggered = True
                 warning_sensor = pos
                 warning_dist = d
@@ -173,7 +173,7 @@ def start_tof_thread(tof_manager, tts_manager):
         if not warning_triggered:
             for pos in ['left', 'right']:
                 d = distances.get(pos, 9999)
-                if d != -1 and 100 < d < 600:
+                if d != -1 and 100 < d < 200:
                     warning_triggered = True
                     warning_sensor = pos
                     warning_dist = d
@@ -202,22 +202,12 @@ def start_tof_thread(tof_manager, tts_manager):
                 })
                 
                 # 2. Audio Directional Warning
-                if current_mode in ["IDLE", "PAUSED"]:
-                    if warning_sensor == "bottom":
-                        tts_manager.announce("Obstacle below")
-                    elif warning_sensor == "center":
-                        tts_manager.announce("Obstacle ahead")
-                    else:
-                        tts_manager.announce(f"Obstacle {warning_sensor}")
-                        
-                    # Force AI to identify
-                    state.set_mode("IDENTIFY_OBSTACLE")
-        else:
-            # Only revert to base_mode if we are in IDENTIFY_OBSTACLE and the obstacle is gone
-            if current_mode == "IDENTIFY_OBSTACLE":
-                with state.lock:
-                    prev = state.base_mode
-                state.set_mode(prev)
+                if warning_sensor == "bottom":
+                    tts_manager.announce("Obstacle below")
+                elif warning_sensor == "center":
+                    tts_manager.announce("Obstacle ahead")
+                else:
+                    tts_manager.announce(f"Obstacle {warning_sensor}")
                 
         time.sleep(0.1) # 10Hz
 

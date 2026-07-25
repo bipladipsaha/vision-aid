@@ -229,6 +229,7 @@ class VisionAidService : LifecycleService() {
                     // the microphone, otherwise the Google SpeechRecognizer will throw an error 
                     // complaining that VisionAid is currently recording.
                     wakeWordEngine.pause()
+                    kotlinx.coroutines.delay(300) // Wait for microphone to physically release
                     
                     hapticEngine.pulseCommandAck()
                     ttsEngine.speak("Listening")
@@ -250,9 +251,33 @@ class VisionAidService : LifecycleService() {
                     hapticEngine.pulseConnected()
                 }
                 VisionGesture.ThreeFingerSwipeDown -> {
-                    // Handled by UI to navigate to Settings
+                    Log.i(TAG, "Gesture: Three finger swipe down -> Settings")
+                    hapticEngine.pulseConnected()
                 }
             }
+        }
+    }
+
+    /**
+     * Bypasses the voice engine and directly asks the Pi to find a specific object.
+     * Used for the UI demo buttons.
+     */
+    fun findObject(objectName: String) {
+        lifecycleScope.launch {
+            ttsEngine.speak("Looking for $objectName")
+            sendCommand(PiMessage.Outgoing.ResumeVisionAI())
+            kotlinx.coroutines.delay(100)
+            sendCommand(PiMessage.Outgoing.FindObject(objectName))
+        }
+    }
+
+    /**
+     * Shuts down the camera on the Pi.
+     */
+    fun stopCamera() {
+        lifecycleScope.launch {
+            sendCommand(PiMessage.Outgoing.PauseVisionAI())
+            ttsEngine.speak("Camera stopped")
         }
     }
 

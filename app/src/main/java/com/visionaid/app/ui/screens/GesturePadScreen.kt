@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,6 +57,8 @@ import kotlinx.coroutines.launch
 fun GesturePadScreen(
     serviceState: StateFlow<ServiceState>?,
     onGestureAction: ((VisionGesture) -> Unit)? = null,
+    onFindObject: ((String) -> Unit)? = null,
+    onStopCamera: (() -> Unit)? = null,
     onNavigateSettings: () -> Unit = {},
     onNavigateHistory: () -> Unit = {}
 ) {
@@ -63,6 +66,8 @@ fun GesturePadScreen(
         ?: return GesturePadContent(
             state = ServiceState.Idle,
             onGestureAction = onGestureAction,
+            onFindObject = onFindObject,
+            onStopCamera = onStopCamera,
             onNavigateSettings = onNavigateSettings,
             onNavigateHistory = onNavigateHistory
         )
@@ -70,6 +75,8 @@ fun GesturePadScreen(
     GesturePadContent(
         state = state,
         onGestureAction = onGestureAction,
+        onFindObject = onFindObject,
+        onStopCamera = onStopCamera,
         onNavigateSettings = onNavigateSettings,
         onNavigateHistory = onNavigateHistory
     )
@@ -79,6 +86,8 @@ fun GesturePadScreen(
 private fun GesturePadContent(
     state: ServiceState,
     onGestureAction: ((VisionGesture) -> Unit)?,
+    onFindObject: ((String) -> Unit)?,
+    onStopCamera: (() -> Unit)?,
     onNavigateSettings: () -> Unit,
     onNavigateHistory: () -> Unit
 ) {
@@ -172,15 +181,17 @@ private fun GesturePadContent(
                 )
             }
 
-            // Main Canvas
+            // Main Canvas (Scrollable)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .verticalScroll(androidx.compose.foundation.rememberScrollState())
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Top
             ) {
+                Spacer(modifier = Modifier.height(24.dp))
                 // Central Interactive Scanner Button
                 Box(
                     modifier = Modifier
@@ -221,7 +232,23 @@ private fun GesturePadContent(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Demo Finder Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    DemoFindButton("Person", onClick = { onFindObject?.invoke("person") })
+                    DemoFindButton("Laptop", onClick = { onFindObject?.invoke("laptop") })
+                    DemoFindButton("Bottle", onClick = { onFindObject?.invoke("bottle") })
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                DemoFindButton("Stop Camera", onClick = { onStopCamera?.invoke() })
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Instructions Card
                 Column(
@@ -297,6 +324,25 @@ private fun QuickCommandRow(icon: androidx.compose.ui.graphics.vector.ImageVecto
             Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             Text(text = subtitle, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+@Composable
+private fun DemoFindButton(label: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .neoRaised(cornerRadius = 12.dp, blurRadius = 6.dp, offset = 3.dp)
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Find $label",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
