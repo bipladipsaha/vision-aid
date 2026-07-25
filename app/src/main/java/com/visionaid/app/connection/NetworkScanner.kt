@@ -33,32 +33,42 @@ class NetworkScanner @Inject constructor() {
         val subnet = localIp.substringBeforeLast(".") + "."
         Log.i(TAG, "Scanning subnet: ${subnet}x on port $port")
 
-        val deferreds = (1..254).map { i ->
-            async {
-                val ip = "$subnet$i"
-                if (ip == localIp) return@async null // Don't scan ourselves
-
-                try {
-                    val socket = Socket()
-                    socket.connect(InetSocketAddress(ip, port), SCAN_TIMEOUT_MS)
-                    socket.close()
-                    Log.i(TAG, "Found Pi at: $ip")
-                    return@async ip
-                } catch (e: Exception) {
-                    // Timeout or connection refused
-                    return@async null
-                }
-            }
+        // First, quickly check the most common Pi Hotspot IPs (usually .1 or .2)
+        val likelyIps = listOf("${subnet}1", "${subnet}2", "${subnet}3", "${subnet}254")
+        for (ip in likelyIps) {
+            if (ip == localIp) continue
+            if (checkIp(ip, port) != null) return@withContext ip
         }
 
-        // Return the first successful IP (if any)
-        for (deferred in deferreds) {
-            val result = deferred.await()
-            if (result != null) return@withContext result
+        // Scan remaining IPs in small chunks to avoid thread/socket exhaustion
+        val allOtherIps = (4..253).map { "$subnet$it" }.filter { it != localIp }
+        val chunked = allOtherIps.chunked(32)
+
+        for (chunk in chunked) {
+            val deferreds = chunk.map { ip ->
+                async { checkIp(ip, port) }
+            }
+            for (deferred in deferreds) {
+                val result = deferred.await()
+                if (result != null) return@withContext result
+            }
         }
 
         Log.w(TAG, "Pi not found on local subnet")
         return@withContext null
+    }
+
+    private fun checkIp(ip: String, port: Int): String? {
+        try {
+            val socket = Socket()
+            socket.connect(InetSocketAddress(ip, port), SCAN_TIMEOUT_MS)
+            socket.close()
+            Log.i(TAG, "Found Pi at: $ip")
+            return ip
+        } catch (e: Throwable) {
+            // Catch Throwable to handle OutOfMemoryError or other fatal network errors gracefully
+            return null
+        }
     }
 
     /**

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -290,20 +291,14 @@ class PiConnectionManager @Inject constructor(
      * Suspends until the given transport disconnects or errors out.
      */
     private suspend fun waitForDisconnection(transport: PiTransport) {
-        transport.connectionState.collect { state ->
-            when (state) {
-                is TransportState.Disconnected,
-                is TransportState.Error -> {
-                    activeTransport = null
-                    _connectionState.value = _connectionState.value.copy(
-                        status = ConnectionStatus.DISCONNECTED,
-                        lastError = (state as? TransportState.Error)?.message
-                    )
-                    return@collect
-                }
-                else -> { /* still connected, keep waiting */ }
-            }
+        val state = transport.connectionState.first {
+            it is TransportState.Disconnected || it is TransportState.Error
         }
+        activeTransport = null
+        _connectionState.value = _connectionState.value.copy(
+            status = ConnectionStatus.DISCONNECTED,
+            lastError = (state as? TransportState.Error)?.message
+        )
     }
 
     /**
