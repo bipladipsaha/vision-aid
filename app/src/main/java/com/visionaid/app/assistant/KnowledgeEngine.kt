@@ -72,7 +72,7 @@ class KnowledgeEngine @Inject constructor() {
             return@withContext AnswerResult.DirectAnswer("The Gemini API key is missing from the configuration.")
         }
         
-        val modelsToTry = listOf("gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.0-pro")
+        val modelsToTry = listOf("gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-pro")
         var lastErrorMsg = "Unknown error"
 
         for (modelName in modelsToTry) {

@@ -101,6 +101,18 @@ class CommandRouter @Inject constructor(
                 conversationContext.update(action = "telemetry")
             }
 
+            is ParsedCommand.PauseVision -> {
+                speak("Camera paused to save power")
+                connectionManager.send(PiMessage.Outgoing.PauseVisionAI())
+                conversationContext.update(action = "pause_vision")
+            }
+
+            is ParsedCommand.ResumeVision -> {
+                speak("Camera resumed")
+                connectionManager.send(PiMessage.Outgoing.ResumeVisionAI())
+                conversationContext.update(action = "resume_vision")
+            }
+
             // ── Telephony ────────────────────────────────────────
             is ParsedCommand.MakeCall -> {
                 speak("Calling ${command.contactNameOrNumber}")

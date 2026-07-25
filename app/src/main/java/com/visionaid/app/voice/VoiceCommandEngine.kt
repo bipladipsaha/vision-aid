@@ -334,7 +334,20 @@ class VoiceCommandEngine @Inject constructor(
             return ParsedCommand.ReadTelemetry
         }
 
-        // 13. General question fallback (send everything else to Gemini/LLM)
+        // 13. Pause/Resume Vision Check
+        if (text.contains("pause camera") || text.contains("sleep camera") || 
+            text.contains("stop camera") || text.contains("disable camera") ||
+            text.contains("pause vision") || text.contains("sleep vision")) {
+            return ParsedCommand.PauseVision
+        }
+        
+        if (text.contains("resume camera") || text.contains("wake camera") || 
+            text.contains("start camera") || text.contains("enable camera") ||
+            text.contains("resume vision") || text.contains("wake vision")) {
+            return ParsedCommand.ResumeVision
+        }
+
+        // 14. General question fallback (send everything else to Gemini/LLM)
         return ParsedCommand.GeneralQuestion(text)
     }
 

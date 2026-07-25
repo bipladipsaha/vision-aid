@@ -22,6 +22,12 @@ sealed class ParsedCommand {
     /** "Read telemetry", "Battery level", "System status" */
     data object ReadTelemetry : ParsedCommand()
 
+    /** "Pause camera", "Sleep camera", "Stop camera" */
+    data object PauseVision : ParsedCommand()
+
+    /** "Resume camera", "Wake camera", "Start camera" */
+    data object ResumeVision : ParsedCommand()
+
     // ── Telephony ────────────────────────────────────────────────
 
     /** "Call mom", "Phone John", "Dial 9876543210" */
