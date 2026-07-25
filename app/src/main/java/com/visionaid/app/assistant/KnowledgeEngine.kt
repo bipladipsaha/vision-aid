@@ -1,8 +1,6 @@
 package com.visionaid.app.assistant
 
 import android.util.Log
-import com.google.ai.client.generativeai.GenerativeModel
-import com.visionaid.app.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -22,13 +20,9 @@ import javax.inject.Singleton
  * Common factual questions are answered from a local knowledge base.
  * This covers ~80% of simple questions without any network call.
  *
- * ### Tier 2: Android's built-in search (fast, online)
- * For questions not in the local KB, we construct a web search intent
- * and speak the query back, letting the user know we're searching.
- *
- * ### Tier 3: Future cloud AI (optional upgrade)
- * When you're ready to add a paid Gemini/OpenAI key, this engine
- * can be extended to call a cloud API as a fallback.
+ * ### Tier 2: Offline fallback
+ * For questions not in the local KB, we gracefully decline
+ * instead of attempting any network request.
  *
  * This ensures the assistant **never crashes** and always responds,
  * even without internet.
@@ -66,66 +60,8 @@ class KnowledgeEngine @Inject constructor() {
             return@withContext AnswerResult.DirectAnswer(builtInAnswer)
         }
 
-        // Tier 2: Check Gemini LLM (Online, Conversational)
-        val geminiApiKey = BuildConfig.GEMINI_API_KEY
-        if (geminiApiKey.isBlank()) {
-            return@withContext AnswerResult.DirectAnswer("The Gemini API key is missing from the configuration.")
-        }
-        
-        val modelsToTry = listOf("gemini-3.6-flash", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-pro")
-        var lastErrorMsg = "Unknown error"
-
-        for (modelName in modelsToTry) {
-            try {
-                val generativeModel = GenerativeModel(
-                    modelName = modelName,
-                    apiKey = geminiApiKey,
-                    systemInstruction = com.google.ai.client.generativeai.type.content {
-                        text("You are VisionAid, a helpful AI assistant for a visually impaired user. " +
-                                "Keep your answers extremely concise, spoken-word friendly, and usually under 2 sentences. " +
-                                "Do not use markdown or complex formatting.")
-                    }
-                )
-                
-                Log.i(TAG, "Sending query to Gemini using model: $modelName")
-                val response = generativeModel.generateContent(question)
-                val responseText = response.text?.trim()
-                
-                if (!responseText.isNullOrEmpty()) {
-                    return@withContext AnswerResult.DirectAnswer(responseText)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Gemini API failed with model $modelName", e)
-                var errorMsg = e.message ?: "Unknown error"
-                
-                // Extract JSON message if it's an Unexpected Response
-                if (errorMsg.contains("Unexpected Response:")) {
-                    try {
-                        val jsonStr = errorMsg.substringAfter("Unexpected Response:").trim()
-                        val jsonObject = org.json.JSONObject(jsonStr)
-                        val errorObj = jsonObject.optJSONObject("error")
-                        if (errorObj != null && errorObj.has("message")) {
-                            errorMsg = errorObj.getString("message")
-                        }
-                    } catch (ignore: Exception) {}
-                }
-                
-                lastErrorMsg = errorMsg
-                
-                // If it's a "not found" error, we loop and try the next model.
-                // Otherwise, we break out because it's a real error (like billing/permissions).
-                if (!errorMsg.contains("not found", ignoreCase = true)) {
-                    break
-                }
-            }
-        }
-        
-        // If we exhausted all models or hit a fatal error, check for API key issues
-        if (lastErrorMsg.contains("API key not valid", ignoreCase = true)) {
-            return@withContext AnswerResult.DirectAnswer("Your Gemini API key appears to be invalid or expired. Please check Google AI Studio.")
-        }
-        
-        return@withContext AnswerResult.DirectAnswer("Gemini AI error: $lastErrorMsg")
+        // Tier 2: Offline fallback
+        return@withContext AnswerResult.DirectAnswer("I am currently in offline mode and cannot answer that question.")
     }
 
     /**

@@ -74,8 +74,7 @@ class RealToFManager:
                 dist = sensor.range
                 distances[position] = dist
             except Exception as e:
-                # Print the exact error so we can debug I2C crashes
-                print(f"[ERR] {position} sensor failed: {e}")
+                # Silently catch to avoid console spam; the main loop handles -1 (ERR)
                 pass
                 
         return distances
@@ -127,7 +126,8 @@ if __name__ == "__main__":
                     val_str = f"{val:4d}mm"
                 out.append(f"{pos.capitalize()}: {val_str}")
                 
-            print(" | ".join(out), end="\r", flush=True)
+            line_str = " | ".join(out)
+            print(f"{line_str:<70}", end="\r", flush=True)
             time.sleep(0.1)
             
     except KeyboardInterrupt:

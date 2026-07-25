@@ -348,7 +348,7 @@ class VoiceCommandEngine @Inject constructor(
             return ParsedCommand.ResumeVision
         }
 
-        // 14. General question fallback (send everything else to Gemini/LLM)
+        // 14. General question fallback (Offline KB)
         return ParsedCommand.GeneralQuestion(text)
     }
 

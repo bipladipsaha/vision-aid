@@ -33,7 +33,6 @@ android {
         
         buildConfigField("String", "ELEVENLABS_API_KEY", "\"${localProperties.getProperty("ELEVENLABS_API_KEY", "")}\"")
         buildConfigField("String", "ELEVENLABS_VOICE_ID", "\"${localProperties.getProperty("ELEVENLABS_VOICE_ID", "")}\"")
-        buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY", "")}\"")
     }
 
     buildTypes {
@@ -107,7 +106,4 @@ dependencies {
     // Runs entirely on-device, no API keys or internet needed
     implementation("com.alphacephei:vosk-android:0.3.47")
     implementation("net.java.dev.jna:jna:5.14.0@aar")
-
-    // Google Gemini API for conversational brain
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 }
