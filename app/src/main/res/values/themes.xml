@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Base application theme (used before Compose loads).
+        This is a minimal splash/bootstrap theme. The actual theming
+        is handled entirely by Jetpack Compose via VisionAidTheme.
+    -->
+    <style name="Theme.VisionAidAI" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/vision_dark_background</item>
+        <item name="android:colorBackground">@color/vision_dark_background</item>
+        <item name="android:statusBarColor">@color/vision_dark_background</item>
+        <item name="android:navigationBarColor">@color/vision_dark_background</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary surfaces -->
+    <color name="vision_dark_background">#FF0A0A0F</color>
+    <color name="vision_dark_surface">#FF141420</color>
+    <color name="vision_dark_surface_variant">#FF1E1E2E</color>
+
+    <!-- Text -->
+    <color name="vision_text_primary">#FFF5F5F5</color>
+    <color name="vision_text_secondary">#FFB0B0C0</color>
+    <color name="vision_text_disabled">#FF6E6E80</color>
+
+    <!-- Semantic accents -->
+    <color name="safe_green">#FF4ADE80</color>
+    <color name="warning_amber">#FFFBBF24</color>
+    <color name="danger_red">#FFF87171</color>
+    <color name="pi_connected_blue">#FF60A5FA</color>
+    <color name="accent_cyan">#FF22D3EE</color>
+
+    <!-- Notification -->
+    <color name="notification_tint">#FF60A5FA</color>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration for VisionAid AI.
+
+    Allows cleartext (unencrypted) WebSocket traffic ONLY to the Pi's
+    local USB-tethered IP address (192.168.42.1). This is safe because
+    it's a direct wired connection, not internet traffic.
+
+    Without this, Android 9+ blocks ws:// connections with:
+    "CLEARTEXT communication to 192.168.42.1 not permitted by network security policy"
+-->
+<network-security-config>
+    <!-- Allow cleartext globally to support dynamic local IPs during network scanning -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

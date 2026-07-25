@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App identity -->
+    <string name="app_name">VisionAid AI</string>
+
+    <!-- Notification channel -->
+    <string name="notification_channel_name">VisionAid Active Monitoring</string>
+    <string name="notification_channel_description">Keeps VisionAid AI running to relay obstacle warnings and voice commands from your wearable device</string>
+
+    <!-- Notification content -->
+    <string name="notification_title">VisionAid AI is active</string>
+    <string name="notification_text">Monitoring your surroundings</string>
+
+    <!-- Service connection states (for display and TalkBack) -->
+    <string name="status_idle">VisionAid starting…</string>
+    <string name="status_waiting">Waiting for wearable device</string>
+    <string name="status_connecting">Connecting to wearable…</string>
+    <string name="status_connected">Connected to %1$s</string>
+    <string name="status_reconnecting">Reconnecting…</string>
+    <string name="status_error">Error: %1$s</string>
+
+    <!-- Transport type display -->
+    <string name="transport_via">via %1$s</string>
+
+    <!--
+        Gesture pad TalkBack description.
+        This is the FULL screen description read by TalkBack when the
+        gesture pad has focus. It tells blind users exactly what gestures
+        are available and the current connection state.
+    -->
+    <string name="gesture_pad_description">VisionAid gesture pad. Current status: %1$s. Double-tap anywhere to activate voice command. Long press anywhere to describe scene. Two-finger swipe up or down to adjust volume.</string>
+
+    <!-- Gesture hints for low-vision users (visible on screen) -->
+    <string name="gesture_hint">Double-tap: Voice command\nLong press: Describe scene\nTwo-finger swipe: Volume</string>
+
+    <!-- Gesture feedback announcements (TalkBack) -->
+    <string name="gesture_announce_double_tap">Listening</string>
+    <string name="gesture_announce_long_press">Describing scene</string>
+    <string name="gesture_announce_volume_up">Volume up</string>
+    <string name="gesture_announce_volume_down">Volume down</string>
+
+    <!-- TalkBack custom actions -->
+    <string name="action_voice_command">Voice command</string>
+    <string name="action_describe_scene">Describe scene</string>
+    <string name="action_volume_up">Volume up</string>
+    <string name="action_volume_down">Volume down</string>
+
+    <!-- Future phases -->
+    <string name="voice_listening">Listening for your command…</string>
+    <string name="voice_processing">Processing…</string>
+    <string name="thermal_warning">System running hot. Pausing vision AI.</string>
+    <string name="battery_low_warning">Wearable battery low. %1$d percent remaining.</string>
+</resources>

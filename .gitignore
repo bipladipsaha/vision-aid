@@ -1,0 +1,21 @@
+# Gradle files
+build/
+.gradle/
+
+# Local configuration file (hides credentials like API keys)
+local.properties
+
+# IntelliJ IDEA files
+.idea/
+*.iml
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Agents files (as requested by user)
+.agents/
+
+# Kotlin / Android generated files
+.kotlin/
+app/build/
