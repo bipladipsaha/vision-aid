@@ -44,8 +44,7 @@ import javax.inject.Singleton
 @Singleton
 class PiConnectionManager @Inject constructor(
     private val webSocketTransport: WebSocketTransport,
-    private val bluetoothTransport: BluetoothTransport,
-    private val mockTransport: MockTransport
+    private val bluetoothTransport: BluetoothTransport
 ) {
     companion object {
         private const val TAG = "PiConnectionManager"
@@ -75,9 +74,6 @@ class PiConnectionManager @Inject constructor(
     private var healthCheckJob: Job? = null
     private var messageCollectorJobs = mutableListOf<Job>()
 
-    /** Whether to use mock transport (set true when hardware isn't ready). */
-    private var useMockTransport = false
-
     /** Addresses for each transport. */
     private var webSocketAddress = WebSocketTransport.DEFAULT_PI_ADDRESS
     private var bluetoothAddress: String? = null
@@ -89,18 +85,15 @@ class PiConnectionManager @Inject constructor(
      *
      * @param btAddress Bluetooth MAC address of the Pi (null to skip BT)
      * @param wsAddress WebSocket URL of the Pi (default: USB tethering IP)
-     * @param useMock If true, connect to mock transport (no hardware needed)
      */
     fun start(
         btAddress: String? = null,
-        wsAddress: String = WebSocketTransport.DEFAULT_PI_ADDRESS,
-        useMock: Boolean = false
+        wsAddress: String = WebSocketTransport.DEFAULT_PI_ADDRESS
     ) {
         this.bluetoothAddress = btAddress
         this.webSocketAddress = wsAddress
-        this.useMockTransport = useMock
 
-        Log.i(TAG, "Starting connection manager (mock=$useMock, bt=$btAddress, ws=$wsAddress)")
+        Log.i(TAG, "Starting connection manager (bt=$btAddress, ws=$wsAddress)")
 
         // Start collecting messages from all transports
         startMessageCollectors()
@@ -158,7 +151,6 @@ class PiConnectionManager @Inject constructor(
             val transport = when (type) {
                 TransportType.USB_WEBSOCKET -> webSocketTransport
                 TransportType.BLUETOOTH -> bluetoothTransport
-                TransportType.MOCK -> mockTransport
             }
             connectSingleTransport(transport, getAddressForTransport(transport))
         }
@@ -231,11 +223,6 @@ class PiConnectionManager @Inject constructor(
     private suspend fun buildTransportList(): List<Pair<PiTransport, String>> {
         val transports = mutableListOf<Pair<PiTransport, String>>()
 
-        if (useMockTransport) {
-            transports.add(mockTransport to "VisionAid-Pi-Mock")
-            return transports
-        }
-
         // Priority 1: USB WebSocket (if available)
         if (webSocketTransport.isAvailable()) {
             transports.add(webSocketTransport to webSocketAddress)
@@ -247,10 +234,8 @@ class PiConnectionManager @Inject constructor(
             transports.add(bluetoothTransport to btAddr)
         }
 
-        // Fallback: Mock (always available as last resort during dev)
         if (transports.isEmpty()) {
-            Log.w(TAG, "No real transports available, falling back to mock")
-            transports.add(mockTransport to "VisionAid-Pi-Mock")
+            Log.w(TAG, "No transports available")
         }
 
         return transports
@@ -309,7 +294,7 @@ class PiConnectionManager @Inject constructor(
         messageCollectorJobs.forEach { it.cancel() }
         messageCollectorJobs.clear()
 
-        val transports = listOf(webSocketTransport, bluetoothTransport, mockTransport)
+        val transports = listOf(webSocketTransport, bluetoothTransport)
         for (transport in transports) {
             val job = scope.launch {
                 transport.incomingMessages.collect { message ->
@@ -346,8 +331,7 @@ class PiConnectionManager @Inject constructor(
         return when (transport) {
             is WebSocketTransport -> TransportType.USB_WEBSOCKET
             is BluetoothTransport -> TransportType.BLUETOOTH
-            is MockTransport -> TransportType.MOCK
-            else -> TransportType.MOCK
+            else -> TransportType.USB_WEBSOCKET
         }
     }
 
@@ -355,7 +339,6 @@ class PiConnectionManager @Inject constructor(
         return when (transport) {
             is WebSocketTransport -> webSocketAddress
             is BluetoothTransport -> bluetoothAddress ?: ""
-            is MockTransport -> "VisionAid-Pi-Mock"
             else -> ""
         }
     }
@@ -380,6 +363,5 @@ enum class ConnectionStatus {
 
 enum class TransportType {
     USB_WEBSOCKET,
-    BLUETOOTH,
-    MOCK
+    BLUETOOTH
 }

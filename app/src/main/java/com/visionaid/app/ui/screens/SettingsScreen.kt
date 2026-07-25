@@ -39,7 +39,6 @@ fun SettingsScreen(
     val voiceSpeed by settingsRepository.voiceSpeedFlow.collectAsState(initial = 1.0f)
     val voicePitch by settingsRepository.voicePitchFlow.collectAsState(initial = 1.0f)
     val hapticIntensity by settingsRepository.hapticIntensityFlow.collectAsState(initial = 1.0f)
-    val useMock by settingsRepository.useMockConnectionFlow.collectAsState(initial = true)
 
     Column(
         modifier = Modifier

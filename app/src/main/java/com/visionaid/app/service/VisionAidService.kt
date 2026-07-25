@@ -169,18 +169,8 @@ class VisionAidService : LifecycleService() {
             }
         }
 
-        // Observe mock connection setting
-        lifecycleScope.launch {
-            settingsRepository.useMockConnectionFlow.collectLatest { useMock ->
-                if (useMock) {
-                    Log.i(TAG, "Settings changed: Switching to Mock Transport")
-                    startWithMock()
-                } else {
-                    Log.i(TAG, "Settings changed: Switching to Hardware Transport")
-                    startWithHardware()
-                }
-            }
-        }
+        // Start hardware connection
+        startWithHardware()
 
         // START_STICKY: Android restarts the service if it's killed
         return START_STICKY
@@ -202,22 +192,6 @@ class VisionAidService : LifecycleService() {
     //  CONNECTION MANAGEMENT
     // ══════════════════════════════════════════════════════════════
 
-    /**
-     * Start with mock transport for development (no hardware needed).
-     * The mock simulates telemetry, obstacle warnings, and command responses.
-     */
-    fun startWithMock() {
-        Log.i(TAG, "Starting with mock transport (hardware not ready)")
-        connectionManager.start(useMock = true)
-    }
-
-    /**
-     * Start with real transports for Pi hardware.
-     * Call this when the Pi wearable is ready.
-     *
-     * @param bluetoothAddress MAC address of the Pi's Bluetooth adapter
-     * @param webSocketAddress WebSocket URL (default: USB tethering IP)
-     */
     fun startWithHardware(
         bluetoothAddress: String? = null,
         webSocketAddress: String = "ws://192.168.42.1:8765"
@@ -225,8 +199,7 @@ class VisionAidService : LifecycleService() {
         Log.i(TAG, "Starting with hardware (bt=$bluetoothAddress, ws=$webSocketAddress)")
         connectionManager.start(
             btAddress = bluetoothAddress,
-            wsAddress = webSocketAddress,
-            useMock = false
+            wsAddress = webSocketAddress
         )
     }
 

@@ -79,31 +79,12 @@ class RealToFManager:
                 
         return distances
 
-class MockToFManager:
-    def __init__(self):
-        print("[INFO] Initializing MOCK ToF sensors for Windows testing...")
-        self.sensors = {'left': True, 'center': True, 'right': True, 'bottom': True}
-        self.mock_distances = {'left': 1500, 'center': 1500, 'right': 1500, 'bottom': 1500}
-        
-    def get_distances(self):
-        # We will add some small random jitter to look realistic
-        return {
-            pos: max(10, val + random.randint(-5, 5))
-            for pos, val in self.mock_distances.items()
-        }
-        
-    def trigger_fake_warning(self, pos='center', dist=500):
-        """Allows us to manually simulate a person walking in front of a sensor."""
-        if pos in self.mock_distances:
-            self.mock_distances[pos] = dist
-            print(f"[MOCK] Simulated obstacle on {pos} sensor at {dist}mm")
-
 def ToFManager():
-    """Factory function returning the Real or Mock manager depending on the OS."""
+    """Factory function returning the Real manager."""
     if HARDWARE_AVAILABLE:
         return RealToFManager()
     else:
-        return MockToFManager()
+        raise RuntimeError("Hardware is not available on this device. RealToFManager cannot be initialized.")
 
 if __name__ == "__main__":
     # Test script for running just this file on the Pi

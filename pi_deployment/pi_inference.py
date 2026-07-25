@@ -105,11 +105,7 @@ async def ws_handler(websocket):
                     state.set_mode("IDLE")
                     await websocket.send(json.dumps({"type": "ack", "message": "Stopped search"}))
                     
-                elif cmd_type == "SIMULATE_OBSTACLE":
-                    if state.tof_manager and hasattr(state.tof_manager, 'trigger_fake_warning'):
-                        state.tof_manager.trigger_fake_warning('center', 400)
-                        await websocket.send(json.dumps({"type": "ack", "message": "Simulated ToF obstacle!"}))
-                        
+
                 elif cmd_type == "request_telemetry":
                     await websocket.send(json.dumps({
                         "type": "telemetry",

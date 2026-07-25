@@ -26,14 +26,12 @@ class SettingsRepository @Inject constructor(
         val KEY_VOICE_SPEED = floatPreferencesKey("voice_speed")
         val KEY_VOICE_PITCH = floatPreferencesKey("voice_pitch")
         val KEY_HAPTIC_INTENSITY = floatPreferencesKey("haptic_intensity")
-        val KEY_USE_MOCK = booleanPreferencesKey("use_mock_connection")
         val KEY_FIRST_LAUNCH = booleanPreferencesKey("first_launch")
     }
 
     val voiceSpeedFlow: Flow<Float> = context.dataStore.data.map { it[KEY_VOICE_SPEED] ?: 1.0f }
     val voicePitchFlow: Flow<Float> = context.dataStore.data.map { it[KEY_VOICE_PITCH] ?: 1.0f }
     val hapticIntensityFlow: Flow<Float> = context.dataStore.data.map { it[KEY_HAPTIC_INTENSITY] ?: 1.0f }
-    val useMockConnectionFlow: Flow<Boolean> = context.dataStore.data.map { it[KEY_USE_MOCK] ?: false }
     val isFirstLaunchFlow: Flow<Boolean> = context.dataStore.data.map { it[KEY_FIRST_LAUNCH] ?: true }
 
     suspend fun setVoiceSpeed(speed: Float) {
@@ -48,9 +46,7 @@ class SettingsRepository @Inject constructor(
         context.dataStore.edit { it[KEY_HAPTIC_INTENSITY] = intensity.coerceIn(0.2f, 2.0f) }
     }
 
-    suspend fun setUseMockConnection(useMock: Boolean) {
-        context.dataStore.edit { it[KEY_USE_MOCK] = useMock }
-    }
+
 
     suspend fun setFirstLaunch(isFirst: Boolean) {
         context.dataStore.edit { it[KEY_FIRST_LAUNCH] = isFirst }
