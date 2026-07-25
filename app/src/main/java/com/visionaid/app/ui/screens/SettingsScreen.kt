@@ -151,28 +151,6 @@ fun SettingsScreen(
                 }
             )
 
-            // Manual Pi Connection
-            var piAddress by remember { mutableStateOf("192.168.4.1") }
-            SettingsCard(
-                icon = Icons.Default.Build,
-                title = "Manual Pi Connection",
-                subtitle = "Connect to Pi using IP address.",
-                content = {
-                    OutlinedTextField(
-                        value = piAddress,
-                        onValueChange = { piAddress = it },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        label = { Text("IP Address", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        singleLine = true
-                    )
-                }
-            )
         }
     }
 }
