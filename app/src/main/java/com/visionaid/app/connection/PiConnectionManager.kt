@@ -173,45 +173,52 @@ class PiConnectionManager @Inject constructor(
         var retryDelay = INITIAL_RETRY_DELAY_MS
 
         while (scope.isActive) {
-            val transportsToTry = buildTransportList()
+            try {
+                val transportsToTry = buildTransportList()
 
-            for ((transport, address) in transportsToTry) {
-                if (!scope.isActive) return
+                for ((transport, address) in transportsToTry) {
+                    if (!scope.isActive) return
 
-                Log.i(TAG, "Trying ${transport.transportName}...")
-                _connectionState.value = _connectionState.value.copy(
-                    status = ConnectionStatus.CONNECTING,
-                    activeTransportType = getTransportType(transport),
-                    lastError = null
-                )
+                    Log.i(TAG, "Trying ${transport.transportName}...")
+                    _connectionState.value = _connectionState.value.copy(
+                        status = ConnectionStatus.CONNECTING,
+                        activeTransportType = getTransportType(transport),
+                        lastError = null
+                    )
 
-                val connected = connectSingleTransport(transport, address)
-                if (connected) {
-                    // Success! Reset retry delay and start health checks
-                    retryDelay = INITIAL_RETRY_DELAY_MS
-                    startHealthCheck(transport)
+                    val connected = connectSingleTransport(transport, address)
+                    if (connected) {
+                        // Success! Reset retry delay and start health checks
+                        retryDelay = INITIAL_RETRY_DELAY_MS
+                        startHealthCheck(transport)
 
-                    // Wait here until disconnection
-                    waitForDisconnection(transport)
+                        // Wait here until disconnection
+                        waitForDisconnection(transport)
 
-                    Log.w(TAG, "${transport.transportName} disconnected, failing over...")
-                    healthCheckJob?.cancel()
+                        Log.w(TAG, "${transport.transportName} disconnected, failing over...")
+                        healthCheckJob?.cancel()
 
-                    // Small delay before trying next transport
-                    delay(500)
-                    break
+                        // Small delay before trying next transport
+                        delay(500)
+                        break
+                    }
                 }
-            }
 
-            // All transports failed — retry with backoff
-            if (activeTransport == null && scope.isActive) {
-                Log.w(TAG, "All transports failed. Retrying in ${retryDelay}ms...")
-                _connectionState.value = _connectionState.value.copy(
-                    status = ConnectionStatus.RECONNECTING,
-                    lastError = "All transports failed, retrying..."
-                )
-                delay(retryDelay)
-                retryDelay = (retryDelay * 2).coerceAtMost(MAX_RETRY_DELAY_MS)
+                // All transports failed — retry with backoff
+                if (activeTransport == null && scope.isActive) {
+                    Log.w(TAG, "All transports failed. Retrying in ${retryDelay}ms...")
+                    _connectionState.value = _connectionState.value.copy(
+                        status = ConnectionStatus.RECONNECTING,
+                        lastError = "All transports failed, retrying..."
+                    )
+                    delay(retryDelay)
+                    retryDelay = (retryDelay * 2).coerceAtMost(MAX_RETRY_DELAY_MS)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.e(TAG, "Fatal error in failover loop, retrying safely", e)
+                delay(INITIAL_RETRY_DELAY_MS)
             }
         }
     }
@@ -270,7 +277,7 @@ class PiConnectionManager @Inject constructor(
             success
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e(TAG, "${transport.transportName} connection failed", e)
             _connectionState.value = _connectionState.value.copy(
                 lastError = "${transport.transportName}: ${e.message}"

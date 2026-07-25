@@ -39,7 +39,9 @@ import javax.inject.Singleton
  * This is the **preferred** transport when USB is connected.
  */
 @Singleton
-class WebSocketTransport @Inject constructor() : PiTransport {
+class WebSocketTransport @Inject constructor(
+    private val networkScanner: NetworkScanner
+) : PiTransport {
 
     companion object {
         private const val TAG = "WebSocketTransport"
@@ -79,10 +81,24 @@ class WebSocketTransport @Inject constructor() : PiTransport {
     override suspend fun connect(address: String): Boolean = withContext(Dispatchers.IO) {
         try {
             _connectionState.value = TransportState.Connecting
-            Log.i(TAG, "Connecting to WebSocket: $address")
+            
+            var finalAddress = address
+            // Automatically scan for the Pi if using the default address
+            if (address == DEFAULT_PI_ADDRESS) {
+                Log.i(TAG, "Scanning for Pi on local hotspot subnet...")
+                val scannedIp = networkScanner.scanForPi()
+                if (scannedIp != null) {
+                    finalAddress = "ws://$scannedIp:8765"
+                    Log.i(TAG, "Scanner found Pi! Using address: $finalAddress")
+                } else {
+                    Log.i(TAG, "Scanner could not find Pi, falling back to default: $address")
+                }
+            }
+
+            Log.i(TAG, "Connecting to WebSocket: $finalAddress")
 
             val request = Request.Builder()
-                .url(address)
+                .url(finalAddress)
                 .build()
 
             webSocket = client.newWebSocket(request, createWebSocketListener())
@@ -93,8 +109,8 @@ class WebSocketTransport @Inject constructor() : PiTransport {
             _connectionState.value is TransportState.Connected
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "WebSocket connection failed", e)
+        } catch (e: Throwable) {
+            Log.e(TAG, "WebSocket connection failed completely", e)
             _connectionState.value = TransportState.Error("Connection failed: ${e.message}")
             false
         }
