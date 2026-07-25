@@ -101,6 +101,26 @@ async def ws_handler(websocket):
                     if state.tof_manager and hasattr(state.tof_manager, 'trigger_fake_warning'):
                         state.tof_manager.trigger_fake_warning('center', 400)
                         await websocket.send(json.dumps({"type": "ack", "message": "Simulated ToF obstacle!"}))
+                        
+                elif cmd_type == "request_telemetry":
+                    await websocket.send(json.dumps({
+                        "type": "telemetry",
+                        "payload": {
+                            "cpu_temp": get_cpu_temp(),
+                            "camera_connected": True,
+                            "tof_active": state.tof_manager is not None,
+                            "vision_paused": state.mode == "PAUSED"
+                        }
+                    }))
+                    
+                elif cmd_type == "pause_vision":
+                    state.set_mode("PAUSED")
+                    await websocket.send(json.dumps({"type": "ack", "message": "Vision AI paused"}))
+                    
+                elif cmd_type == "resume_vision":
+                    state.set_mode("IDLE")
+                    await websocket.send(json.dumps({"type": "ack", "message": "Vision AI resumed"}))
+                    
             except json.JSONDecodeError:
                 print("[WS] Invalid JSON received")
     except websockets.exceptions.ConnectionClosed:
@@ -109,6 +129,13 @@ async def ws_handler(websocket):
         with state.lock:
             state.clients.remove(websocket)
         print("[WS] Client disconnected")
+
+def get_cpu_temp():
+    try:
+        with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+            return float(f.read()) / 1000.0
+    except Exception:
+        return 0.0
 
 def start_ws_server(port=8765):
     async def main_ws():
@@ -646,6 +673,13 @@ def main():
                     print('[WARN] Camera read failed, retrying...')
                     time.sleep(0.1)
                     continue
+            
+            with state.lock:
+                current_mode = state.mode
+            
+            if current_mode == "PAUSED":
+                time.sleep(0.5) # Save massive CPU/Battery when vision is paused by App
+                continue
             
             frame_count += 1
             
