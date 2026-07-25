@@ -94,11 +94,22 @@ class KnowledgeEngine @Inject constructor() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Gemini API failed to answer", e)
-            val errorMsg = e.message ?: "Unknown error"
+            var errorMsg = e.message ?: "Unknown error"
+            
+            // Extract JSON message if it's an Unexpected Response
+            if (errorMsg.contains("Unexpected Response:")) {
+                try {
+                    val jsonStr = errorMsg.substringAfter("Unexpected Response:").trim()
+                    val jsonObject = org.json.JSONObject(jsonStr)
+                    val errorObj = jsonObject.optJSONObject("error")
+                    if (errorObj != null && errorObj.has("message")) {
+                        errorMsg = errorObj.getString("message")
+                    }
+                } catch (ignore: Exception) {}
+            }
             
             // Check for common API key errors
-            if (errorMsg.contains("API key not valid", ignoreCase = true) || 
-                errorMsg.contains("400") || errorMsg.contains("403")) {
+            if (errorMsg.contains("API key not valid", ignoreCase = true)) {
                 return@withContext AnswerResult.DirectAnswer("Your Gemini API key appears to be invalid or expired. Please check Google AI Studio.")
             }
             
